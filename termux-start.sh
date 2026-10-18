@@ -76,7 +76,7 @@ echo "🔍 Network Access Addresses (Hotspot/Wi-Fi):"
 if command -v ip >/dev/null 2>&1; then
     ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | while read -r ip; do
         echo "   👉 PocketHub (Media & Quick Notes): http://$ip:3000"
-        if [ -n "$TRILIUM_PID" ]; then
+        if [ -n "$TRILIUM_PID" ] && kill -0 "$TRILIUM_PID" 2>/dev/null; then
             echo "   👉 Trilium Notes (Port 8080):       http://$ip:8080"
         fi
     done

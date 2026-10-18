@@ -9,6 +9,8 @@ test('Frontend Trilium Integration Elements', () => {
   assert.ok(html.includes('id="view-trilium"'), 'Index HTML should include #view-trilium section');
   assert.ok(html.includes('id="trilium-frame"'), 'Index HTML should include #trilium-frame iframe');
   assert.ok(html.includes('id="trilium-new-tab-link"'), 'Index HTML should include #trilium-new-tab-link');
+  assert.ok(html.includes('id="trilium-offline-card"'), 'Index HTML should include #trilium-offline-card fallback');
+  assert.ok(html.includes('id="trilium-retry-btn"'), 'Index HTML should include #trilium-retry-btn');
 
   const js = fs.readFileSync(path.join(__dirname, '../public/js/app.js'), 'utf8');
   assert.ok(js.includes('8080'), 'App JS should configure port 8080 for Trilium navigation');

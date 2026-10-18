@@ -878,3 +878,75 @@ body {
   display: block;
 }
 
+/* Trilium Offline / Direct Access Card */
+.trilium-offline-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.offline-card-inner {
+  max-width: 520px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.offline-icon {
+  font-size: 3.5rem;
+}
+
+.offline-card-inner h2 {
+  font-size: 1.5rem;
+  color: var(--text-main);
+}
+
+.offline-card-inner p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.offline-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.setup-hint-box {
+  margin-top: 16px;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 18px;
+  text-align: left;
+  width: 100%;
+}
+
+.setup-hint-box p {
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: #94a3b8;
+}
+
+.setup-hint-box code {
+  display: block;
+  font-family: monospace;
+  background: #0f172a;
+  color: #38bdf8;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  overflow-x: auto;
+}
+
+

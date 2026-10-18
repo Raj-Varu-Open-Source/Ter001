@@ -91,7 +91,23 @@
           </div>
         </header>
 
-        <div class="trilium-frame-wrapper">
+        <div id="trilium-offline-card" class="trilium-offline-card">
+          <div class="offline-card-inner">
+            <span class="offline-icon">📚</span>
+            <h2>Trilium Notes Server (Port 8080)</h2>
+            <p id="trilium-status-desc">Connect directly to Trilium or open in a dedicated browser tab.</p>
+            <div class="offline-actions">
+              <a id="trilium-direct-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn primary">Open in Dedicated Tab ↗</a>
+              <button id="trilium-retry-btn" class="btn secondary">🔄 Check Connection</button>
+            </div>
+            <div class="setup-hint-box">
+              <p><strong>First time setup on Android Termux:</strong></p>
+              <code>chmod +x setup-trilium.sh &amp;&amp; ./setup-trilium.sh</code>
+            </div>
+          </div>
+        </div>
+
+        <div id="trilium-frame-wrapper" class="trilium-frame-wrapper" style="display:none;">
           <iframe id="trilium-frame" src="about:blank" title="Trilium Notes" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
         </div>
       </section>

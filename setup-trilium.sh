@@ -48,6 +48,9 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y curl wget tar xz-utils ca-certificates libatomic1
 
+# Ensure internal native ext4 data directory exists for SQLite WAL mode safety
+mkdir -p /root/trilium-data
+
 TRILIUM_DIR="/root/trilium"
 if [ ! -d "$TRILIUM_DIR" ]; then
     mkdir -p "$TRILIUM_DIR"
@@ -80,18 +83,10 @@ cat << 'EOF' > "$DIR/run-trilium.sh"
 #!/data/data/com.termux/files/usr/bin/bash
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Data storage directory
-DATA_DIR="$HOME/storage/shared/PocketHub/trilium-data"
-if [ ! -d "$HOME/storage/shared" ]; then
-    DATA_DIR="$DIR/trilium-data"
-fi
-mkdir -p "$DATA_DIR"
-
 echo "[Trilium] Starting Trilium Server on 0.0.0.0:8080..."
-echo "[Trilium] Data directory: $DATA_DIR"
+echo "[Trilium] Data directory: /root/trilium-data (PRoot native ext4 storage)"
 
-export TRILIUM_DATA_DIR="$DATA_DIR"
-exec proot-distro login debian -- env TRILIUM_DATA_DIR="$DATA_DIR" PORT=8080 HOST=0.0.0.0 /root/trilium/trilium.sh
+exec proot-distro login debian -- env TRILIUM_DATA_DIR="/root/trilium-data" TRILIUM_NETWORK_PORT=8080 TRILIUM_NETWORK_HOST=0.0.0.0 /root/trilium/trilium.sh
 EOF
 
 chmod +x "$DIR/run-trilium.sh"

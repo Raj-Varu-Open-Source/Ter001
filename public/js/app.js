@@ -38,8 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Trilium Dynamic Host Resolution & Frame Management
   const triliumFrame = document.getElementById('trilium-frame');
+  const triliumFrameWrapper = document.getElementById('trilium-frame-wrapper');
+  const triliumOfflineCard = document.getElementById('trilium-offline-card');
   const triliumNewTabLink = document.getElementById('trilium-new-tab-link');
+  const triliumDirectBtn = document.getElementById('trilium-direct-btn');
   const triliumReloadBtn = document.getElementById('trilium-reload-btn');
+  const triliumRetryBtn = document.getElementById('trilium-retry-btn');
+  const triliumStatusDesc = document.getElementById('trilium-status-desc');
 
   function getTriliumUrl() {
     const host = window.location.hostname || 'localhost';
@@ -51,17 +56,53 @@ document.addEventListener('DOMContentLoaded', () => {
     if (triliumNewTabLink) {
       triliumNewTabLink.href = triliumUrl;
     }
-  }
-
-  function loadTriliumFrameIfNeeded() {
-    if (triliumFrame && (!triliumFrame.src || triliumFrame.src === 'about:blank' || triliumFrame.getAttribute('src') === 'about:blank')) {
-      triliumFrame.src = getTriliumUrl();
+    if (triliumDirectBtn) {
+      triliumDirectBtn.href = triliumUrl;
     }
   }
 
-  if (triliumReloadBtn && triliumFrame) {
+  async function checkTriliumConnection() {
+    const triliumUrl = getTriliumUrl();
+    if (triliumStatusDesc) {
+      triliumStatusDesc.textContent = `Connecting to ${triliumUrl}...`;
+    }
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      await fetch(triliumUrl, { mode: 'no-cors', signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (triliumStatusDesc) {
+        triliumStatusDesc.textContent = '✅ Trilium server is online on port 8080.';
+      }
+      if (triliumFrameWrapper) {
+        triliumFrameWrapper.style.display = 'block';
+        if (triliumFrame && (!triliumFrame.src || triliumFrame.src === 'about:blank' || triliumFrame.getAttribute('src') === 'about:blank')) {
+          triliumFrame.src = triliumUrl;
+        }
+      }
+    } catch (_) {
+      if (triliumStatusDesc) {
+        triliumStatusDesc.textContent = 'Trilium server is offline or starting up. Run ./setup-trilium.sh in Termux if not installed.';
+      }
+      if (triliumFrameWrapper) {
+        triliumFrameWrapper.style.display = 'none';
+      }
+    }
+  }
+
+  if (triliumReloadBtn) {
     triliumReloadBtn.addEventListener('click', () => {
-      triliumFrame.src = getTriliumUrl();
+      checkTriliumConnection();
+      if (triliumFrame) {
+        triliumFrame.src = getTriliumUrl();
+      }
+    });
+  }
+
+  if (triliumRetryBtn) {
+    triliumRetryBtn.addEventListener('click', () => {
+      checkTriliumConnection();
     });
   }
 
@@ -81,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (tab === targetTab) {
             views[tab].classList.add('active');
             if (tab === 'trilium') {
-              loadTriliumFrameIfNeeded();
+              checkTriliumConnection();
             }
           } else {
             views[tab].classList.remove('active');
