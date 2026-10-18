@@ -112,36 +112,86 @@
         </div>
       </section>
 
-      <!-- Videos Tab -->
-      <section id="videos-view" class="tab-view">
-        <header class="section-header">
-          <div class="header-title">
-            <h1>Video Library</h1>
-            <p>Stream uploaded videos with full scrubbing and playback controls.</p>
+      <!-- Videos Tab (YouTube 1:1 Clone) -->
+      <section id="videos-view" class="tab-view yt-root">
+        <!-- YouTube Top Category Chips & Search Bar -->
+        <div class="yt-top-bar">
+          <div id="yt-category-chips" class="yt-category-chips">
+            <button id="yt-chip-all" class="yt-chip active" data-subtab="all">All</button>
+            <button id="yt-chip-upload" class="yt-chip" data-subtab="upload">⬆️ Upload Studio</button>
           </div>
-        </header>
+          <div class="yt-search-wrapper">
+            <input type="text" id="videos-search" placeholder="Search videos..." class="yt-search-input">
+          </div>
+        </div>
 
-        <div id="video-dropzone" class="upload-dropzone">
-          <div class="dropzone-content">
-            <span class="upload-icon">🎬</span>
-            <h3>Drop video files here or click to upload</h3>
-            <p>MP4, WebM, MKV, AVI, MOV supported (streamed directly with range requests)</p>
-            <input type="file" id="video-file-input" accept="video/*" style="display:none;">
+        <!-- Subview 1: Browse Video Grid -->
+        <div id="yt-browse-subview" class="yt-subview active">
+          <div id="yt-video-grid" class="yt-video-grid">
+            <!-- Populated by videos.js -->
           </div>
-          <div id="video-upload-progress" class="upload-progress-container" style="display:none;">
-            <div class="progress-bar">
-              <div id="video-progress-fill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+
+        <!-- Subview 2: 2-Column Watch Theater Mode -->
+        <div id="yt-watch-view" class="yt-watch-container" style="display:none;">
+          <!-- Primary Stage (Player + Details) -->
+          <div class="yt-primary-stage">
+            <div class="yt-player-box">
+              <video id="main-video-player" controls preload="metadata" playsinline class="yt-video-element"></video>
             </div>
-            <span id="video-progress-text">Uploading... 0%</span>
+            <div class="yt-watch-info">
+              <h1 id="yt-watch-title" class="yt-watch-title">Video Title</h1>
+              <div class="yt-watch-channel-row">
+                <div class="yt-channel-meta">
+                  <div class="yt-channel-avatar">🎬</div>
+                  <div class="yt-channel-text">
+                    <div class="yt-channel-name">PocketHub Media</div>
+                    <div class="yt-subscriber-count">Direct Android Stream</div>
+                  </div>
+                </div>
+                <div class="yt-watch-actions">
+                  <button id="yt-like-btn" class="yt-action-pill" title="Like">👍 <span id="yt-like-label">Like</span></button>
+                  <a id="yt-download-btn" href="#" download class="yt-action-pill" title="Download">⬇ Download</a>
+                  <button id="yt-delete-btn" class="yt-action-pill yt-danger-pill" title="Delete Video">🗑 Delete</button>
+                  <button id="yt-close-theater-btn" class="yt-action-pill" title="Back to Videos">✕ Back</button>
+                </div>
+              </div>
+              <div class="yt-description-box">
+                <div id="yt-watch-meta-line" class="yt-desc-meta">0 views • Uploaded recently</div>
+                <div id="yt-watch-desc" class="yt-desc-text">Streamed via HTTP 206 Partial Content Range directly from Android Termux local storage.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Stage (Up Next Sidebar Queue) -->
+          <div class="yt-secondary-stage">
+            <h3 class="yt-sidebar-heading">Up Next</h3>
+            <div id="yt-up-next-list" class="yt-up-next-list">
+              <!-- Populated dynamically by videos.js -->
+            </div>
           </div>
         </div>
 
-        <div class="search-bar-container">
-          <input type="text" id="videos-search" placeholder="🔍 Filter videos..." class="input-search">
-        </div>
-
-        <div id="videos-list" class="media-grid">
-          <!-- Populated by videos.js -->
+        <!-- Subview 3: Dedicated Separate Upload Studio Section -->
+        <div id="video-upload-section" class="yt-subview" style="display:none;">
+          <div class="subview-header">
+            <h2>YouTube Upload Studio</h2>
+            <p>Upload video files directly to shared storage with zero-CPU canvas thumbnail preview</p>
+          </div>
+          <div id="video-dropzone" class="upload-dropzone yt-dropzone">
+            <div class="dropzone-content">
+              <span class="upload-icon">🎬</span>
+              <h3>Select video files to upload</h3>
+              <p>Drag and drop MP4, WebM, MKV, MOV, AVI files</p>
+              <input type="file" id="video-file-input" accept="video/*" multiple style="display:none;">
+            </div>
+            <div id="video-upload-progress" class="upload-progress-container" style="display:none;">
+              <div class="progress-bar">
+                <div id="video-progress-fill" class="progress-fill" style="width: 0%;"></div>
+              </div>
+              <span id="video-progress-text">Uploading... 0%</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -345,18 +395,6 @@
     </div>
   </div>
 
-  <!-- Video Player Modal -->
-  <div id="video-modal" class="modal-backdrop" style="display:none;">
-    <div class="modal-card video-modal-card">
-      <div class="modal-header">
-        <h3 id="video-modal-title">Watching Video</h3>
-        <button id="close-video-modal" class="close-btn">&times;</button>
-      </div>
-      <div class="video-container">
-        <video id="main-video-player" controls preload="metadata" playsinline></video>
-      </div>
-    </div>
-  </div>
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>

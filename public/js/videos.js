@@ -1,69 +1,134 @@
-// PocketHub - Videos Module
+// PocketHub - Videos Module (1:1 YouTube UI Clone & Theater Watch Mode)
 const Videos = (() => {
   let videos = [];
-  const videosListEl = document.getElementById('videos-list');
+  let currentPlayingVideo = null;
+  const likedVideoIds = new Set();
+
+  // Top bar & sub-navigation chips
+  const chipAll = document.getElementById('yt-chip-all');
+  const chipUpload = document.getElementById('yt-chip-upload');
   const searchInput = document.getElementById('videos-search');
+
+  // Subviews
+  const browseSubview = document.getElementById('yt-browse-subview');
+  const watchSubview = document.getElementById('yt-watch-view');
+  const uploadSubview = document.getElementById('video-upload-section');
+
+  // Browse grid
+  const videoGrid = document.getElementById('yt-video-grid');
+
+  // Watch Theater elements
+  const videoPlayer = document.getElementById('main-video-player');
+  const watchTitle = document.getElementById('yt-watch-title');
+  const watchMetaLine = document.getElementById('yt-watch-meta-line');
+  const watchDesc = document.getElementById('yt-watch-desc');
+  const likeBtn = document.getElementById('yt-like-btn');
+  const likeLabel = document.getElementById('yt-like-label');
+  const downloadBtn = document.getElementById('yt-download-btn');
+  const deleteBtn = document.getElementById('yt-delete-btn');
+  const closeTheaterBtn = document.getElementById('yt-close-theater-btn');
+  const upNextList = document.getElementById('yt-up-next-list');
+
+  // Upload studio elements
   const dropzone = document.getElementById('video-dropzone');
   const fileInput = document.getElementById('video-file-input');
   const progressContainer = document.getElementById('video-upload-progress');
   const progressFill = document.getElementById('video-progress-fill');
   const progressText = document.getElementById('video-progress-text');
-  const videoModal = document.getElementById('video-modal');
-  const videoPlayer = document.getElementById('main-video-player');
-  const videoModalTitle = document.getElementById('video-modal-title');
-
-  async function loadVideos(query = '') {
-    try {
-      const url = query ? `/api/media?type=video&search=${encodeURIComponent(query)}` : '/api/media?type=video';
-      const res = await fetch(url);
-      videos = await res.json();
-      render();
-    } catch (err) {
-      console.error('Failed to load videos:', err);
-    }
-  }
 
   function formatFileSize(bytes) {
+    if (!bytes || isNaN(bytes)) return '0 B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
   }
 
-  function render() {
-    if (!videosListEl) return;
+  function formatDuration(sec) {
+    if (!sec || isNaN(sec)) return '';
+    const mins = Math.floor(sec / 60);
+    const secs = Math.floor(sec % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  // --- Subview Switching ---
+  function switchSubView(tabName) {
+    [chipAll, chipUpload].forEach(c => c?.classList.remove('active'));
+
+    if (browseSubview) browseSubview.style.display = 'none';
+    if (watchSubview) watchSubview.style.display = 'none';
+    if (uploadSubview) uploadSubview.style.display = 'none';
+
+    if (tabName === 'all') {
+      chipAll?.classList.add('active');
+      if (browseSubview) browseSubview.style.display = 'flex';
+      if (videoPlayer && !videoPlayer.paused) {
+        videoPlayer.pause();
+      }
+    } else if (tabName === 'watch') {
+      if (watchSubview) watchSubview.style.display = 'flex';
+    } else if (tabName === 'upload') {
+      chipUpload?.classList.add('active');
+      if (uploadSubview) uploadSubview.style.display = 'flex';
+      if (videoPlayer && !videoPlayer.paused) {
+        videoPlayer.pause();
+      }
+    }
+  }
+
+  // --- Data Loading ---
+  async function loadVideos(query = '') {
+    try {
+      const url = query ? `/api/media?type=video&search=${encodeURIComponent(query)}` : '/api/media?type=video';
+      const res = await fetch(url);
+      videos = await res.json();
+      renderBrowseGrid();
+      if (currentPlayingVideo) {
+        renderUpNext();
+      }
+    } catch (err) {
+      console.error('Failed to load videos:', err);
+    }
+  }
+
+  // --- Browse Grid Rendering ---
+  function renderBrowseGrid() {
+    if (!videoGrid) return;
+
     if (videos.length === 0) {
-      videosListEl.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 48px; color: var(--text-muted);">
-          <div style="font-size: 2.5rem; margin-bottom: 8px;">🎬</div>
-          <h3>No videos yet</h3>
-          <p>Drag and drop or upload a video above to start building your library.</p>
+      videoGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--yt-text-sub);">
+          <div style="font-size: 3.5rem; margin-bottom: 12px;">🎬</div>
+          <h3>No videos found</h3>
+          <p>Drop video files into the Upload Studio to begin your YouTube collection.</p>
         </div>
       `;
       return;
     }
 
-    videosListEl.innerHTML = videos.map(video => {
-      const thumbSrc = video.thumbnail_path
-        ? `/api/media/${video.id}/thumbnail`
-        : '';
+    videoGrid.innerHTML = videos.map(video => {
+      const thumbSrc = video.thumbnail_path ? `/api/media/${video.id}/thumbnail` : '';
       const sizeStr = formatFileSize(video.file_size);
       const dateStr = new Date(video.created_at).toLocaleDateString(undefined, {
         month: 'short', day: 'numeric', year: 'numeric'
       });
+      const durationBadge = video.duration ? `<span class="yt-duration-badge">${formatDuration(video.duration)}</span>` : `<span class="yt-duration-badge">HD</span>`;
 
       return `
-        <div class="video-card" data-id="${video.id}">
-          <div class="video-thumb-container" onclick="Videos.playVideo(${video.id})">
-            ${thumbSrc ? `<img src="${thumbSrc}" class="video-thumb-img" alt="Thumbnail">` : `<div style="font-size:3rem; opacity:0.4;">🎬</div>`}
-            <div class="video-play-overlay">▶</div>
+        <div class="yt-card" onclick="Videos.playVideo(${video.id})">
+          <div class="yt-thumb-box">
+            ${thumbSrc ? `<img src="${thumbSrc}" class="yt-thumb-img" alt="Thumbnail" loading="lazy">` : `<div style="font-size:3.5rem; opacity:0.3;">🎬</div>`}
+            ${durationBadge}
           </div>
-          <div class="video-card-body">
-            <div class="video-title" title="${escapeHtml(video.original_name)}">${escapeHtml(video.original_name)}</div>
-            <div class="video-meta">${sizeStr} • ${dateStr}</div>
-            <div class="video-actions">
-              <button class="action-btn" onclick="Videos.playVideo(${video.id})">▶ Watch</button>
-              <a href="/api/media/${video.id}/download" class="action-btn" download>⬇ Download</a>
-              <button class="action-btn delete" onclick="Videos.deleteVideo(${video.id})">🗑 Delete</button>
+          <div class="yt-card-details">
+            <div class="yt-channel-avatar">🎬</div>
+            <div class="yt-card-info">
+              <div class="yt-card-title" title="${escapeHtml(video.original_name)}">${escapeHtml(video.original_name)}</div>
+              <div class="yt-channel-name">PocketHub Media</div>
+              <div class="yt-card-meta">${sizeStr} • ${dateStr}</div>
+              <div class="yt-card-actions">
+                <a href="/api/media/${video.id}/download" class="action-btn" download onclick="event.stopPropagation();" title="Download video">⬇ Download</a>
+                <button class="action-btn delete" onclick="event.stopPropagation(); Videos.deleteVideo(${video.id});" title="Delete video">🗑</button>
+              </div>
             </div>
           </div>
         </div>
@@ -71,40 +136,134 @@ const Videos = (() => {
     }).join('');
   }
 
+  // --- Watch Theater Mode ---
   function playVideo(id) {
     const video = videos.find(v => v.id === id);
     if (!video) return;
 
+    currentPlayingVideo = video;
+
+    // Pause music if Spotify is playing
     if (typeof Music !== 'undefined' && typeof Music.pause === 'function') {
       Music.pause();
     }
 
-    videoModalTitle.textContent = video.original_name;
-    videoPlayer.src = `/api/media/${video.id}/stream`;
-    videoModal.style.display = 'flex';
-    videoPlayer.play().catch(() => {});
+    // Populate Theater Player & Meta
+    if (videoPlayer) {
+      videoPlayer.src = `/api/media/${video.id}/stream`;
+      videoPlayer.play().catch(() => {});
+    }
+
+    if (watchTitle) watchTitle.textContent = video.original_name;
+
+    const sizeStr = formatFileSize(video.file_size);
+    const dateStr = new Date(video.created_at).toLocaleDateString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric'
+    });
+    if (watchMetaLine) watchMetaLine.textContent = `${sizeStr} • Uploaded on ${dateStr}`;
+    if (watchDesc) watchDesc.textContent = `Streaming directly from Android device storage (${video.file_path}). Supported by pure Node.js HTTP 206 Partial Content Range streaming.`;
+
+    if (downloadBtn) {
+      downloadBtn.href = `/api/media/${video.id}/download`;
+    }
+
+    if (deleteBtn) {
+      deleteBtn.onclick = () => deleteVideo(video.id);
+    }
+
+    // Like state
+    updateLikeButton();
+
+    // Populate Up Next sidebar
+    renderUpNext();
+
+    // Transition view
+    switchSubView('watch');
   }
 
-  function closeVideoModal() {
-    videoPlayer.pause();
-    videoPlayer.src = '';
-    videoModal.style.display = 'none';
+  function updateLikeButton() {
+    if (!likeBtn || !likeLabel || !currentPlayingVideo) return;
+    const isLiked = likedVideoIds.has(currentPlayingVideo.id);
+    likeLabel.textContent = isLiked ? 'Liked' : 'Like';
+    likeBtn.style.color = isLiked ? 'var(--yt-red)' : 'inherit';
   }
 
+  function toggleLike() {
+    if (!currentPlayingVideo) return;
+    if (likedVideoIds.has(currentPlayingVideo.id)) {
+      likedVideoIds.delete(currentPlayingVideo.id);
+      showToast('Removed from liked videos');
+    } else {
+      likedVideoIds.add(currentPlayingVideo.id);
+      showToast('Added to liked videos! 👍');
+    }
+    updateLikeButton();
+  }
+
+  function closeTheater() {
+    if (videoPlayer) {
+      videoPlayer.pause();
+      videoPlayer.src = '';
+    }
+    currentPlayingVideo = null;
+    switchSubView('all');
+  }
+
+  function renderUpNext() {
+    if (!upNextList) return;
+
+    const remainingVideos = videos.filter(v => !currentPlayingVideo || v.id !== currentPlayingVideo.id);
+
+    if (remainingVideos.length === 0) {
+      upNextList.innerHTML = `
+        <div style="color: var(--yt-text-sub); font-size: 0.85rem; padding: 12px 0;">
+          No other videos in your library.
+        </div>
+      `;
+      return;
+    }
+
+    upNextList.innerHTML = remainingVideos.map(video => {
+      const thumbSrc = video.thumbnail_path ? `/api/media/${video.id}/thumbnail` : '';
+      const sizeStr = formatFileSize(video.file_size);
+      const durationBadge = video.duration ? `<span class="yt-duration-badge">${formatDuration(video.duration)}</span>` : `<span class="yt-duration-badge">HD</span>`;
+
+      return `
+        <div class="yt-up-next-card" onclick="Videos.playVideo(${video.id})">
+          <div class="yt-up-next-thumb">
+            ${thumbSrc ? `<img src="${thumbSrc}" alt="Thumbnail" loading="lazy">` : `<div style="font-size:2rem; opacity:0.3;">🎬</div>`}
+            ${durationBadge}
+          </div>
+          <div class="yt-up-next-info">
+            <div class="yt-up-next-title" title="${escapeHtml(video.original_name)}">${escapeHtml(video.original_name)}</div>
+            <div class="yt-up-next-channel">PocketHub Media</div>
+            <div class="yt-up-next-meta">${sizeStr}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // --- Deletion ---
   async function deleteVideo(id) {
-    if (!confirm('Are you sure you want to remove this video from your phone?')) return;
+    if (!confirm('Are you sure you want to permanently delete this video?')) return;
     try {
       const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete video');
       showToast('Video deleted');
-      loadVideos(searchInput ? searchInput.value : '');
+
+      if (currentPlayingVideo && currentPlayingVideo.id === id) {
+        closeTheater();
+      }
+
+      await loadVideos(searchInput ? searchInput.value : '');
       Storage.updateStorage();
     } catch (err) {
       alert('Error deleting video: ' + err.message);
     }
   }
 
-  // Client-side canvas snapshot thumbnail capture (zero battery/zero FFmpeg on phone)
+  // --- Zero-CPU Client-Side Canvas Video Frame Thumbnail Capture ---
   function captureVideoThumbnail(file) {
     return new Promise((resolve) => {
       const tempVideo = document.createElement('video');
@@ -141,7 +300,6 @@ const Videos = (() => {
         resolve(null);
       };
 
-      // Timeout safety: if video fails to seek within 3 seconds, continue without thumbnail
       setTimeout(() => {
         URL.revokeObjectURL(objectUrl);
         resolve(null);
@@ -149,69 +307,89 @@ const Videos = (() => {
     });
   }
 
+  // --- Upload Handling ---
+  async function uploadFiles(files) {
+    if (!files || files.length === 0) return;
 
-  async function uploadFile(file) {
-    if (!file) return;
+    if (progressContainer) progressContainer.style.display = 'block';
 
-    progressContainer.style.display = 'block';
-    progressFill.style.width = '0%';
-    progressText.textContent = `Preparing upload: ${file.name}...`;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (progressFill) progressFill.style.width = '0%';
+      if (progressText) progressText.textContent = `Processing (${i + 1}/${files.length}): ${file.name}...`;
 
-    // 1. Capture thumbnail in browser
-    let thumbBlob = null;
-    try {
-      thumbBlob = await captureVideoThumbnail(file);
-    } catch (e) {
-      console.warn('Thumbnail generation skipped:', e);
+      let thumbBlob = null;
+      try {
+        thumbBlob = await captureVideoThumbnail(file);
+      } catch (e) {
+        console.warn('Thumbnail generation skipped:', e);
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      if (thumbBlob) {
+        formData.append('thumbnail', thumbBlob, 'thumbnail.jpg');
+      }
+
+      await new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/media/upload');
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && progressFill && progressText) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = percent + '%';
+            progressText.textContent = `Uploading (${i + 1}/${files.length}): ${file.name}... ${percent}%`;
+          }
+        };
+
+        xhr.onload = () => {
+          resolve();
+        };
+
+        xhr.onerror = () => {
+          resolve();
+        };
+
+        xhr.send(formData);
+      });
     }
 
-    // 2. Prepare FormData
-    const formData = new FormData();
-    formData.append('file', file);
-    if (thumbBlob) {
-      formData.append('thumbnail', thumbBlob, 'thumbnail.jpg');
-    }
-
-    // 3. Upload with XMLHttpRequest for real progress tracking
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/media/upload');
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const percent = Math.round((e.loaded / e.total) * 100);
-        progressFill.style.width = percent + '%';
-        progressText.textContent = `Uploading ${file.name}... ${percent}%`;
-      }
-    };
-
-    xhr.onload = () => {
-      progressContainer.style.display = 'none';
-      if (xhr.status === 201) {
-        showToast('Video uploaded successfully!');
-        loadVideos(searchInput ? searchInput.value : '');
-        Storage.updateStorage();
-      } else {
-        alert('Upload failed: ' + xhr.responseText);
-      }
-    };
-
-    xhr.onerror = () => {
-      progressContainer.style.display = 'none';
-      alert('Upload failed due to a network error.');
-    };
-
-    xhr.send(formData);
+    if (progressContainer) progressContainer.style.display = 'none';
+    showToast('Video upload completed! 🎬');
+    await loadVideos();
+    Storage.updateStorage();
+    switchSubView('all');
   }
 
+  // --- Initialization ---
   function init() {
-    dropzone?.addEventListener('click', () => fileInput?.click());
-    fileInput?.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        uploadFile(e.target.files[0]);
+    // Chips navigation
+    chipAll?.addEventListener('click', () => switchSubView('all'));
+    chipUpload?.addEventListener('click', () => switchSubView('upload'));
+
+    // Theater controls
+    closeTheaterBtn?.addEventListener('click', closeTheater);
+    likeBtn?.addEventListener('click', toggleLike);
+
+    // Auto-advance in theater mode when video ends
+    videoPlayer?.addEventListener('ended', () => {
+      if (currentPlayingVideo && videos.length > 1) {
+        const remaining = videos.filter(v => v.id !== currentPlayingVideo.id);
+        if (remaining.length > 0) {
+          playVideo(remaining[0].id);
+        }
       }
     });
 
-    // Drag and drop handlers
+    // Upload dropzone
+    dropzone?.addEventListener('click', () => fileInput?.click());
+    fileInput?.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        uploadFiles(e.target.files);
+      }
+    });
+
     dropzone?.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropzone.classList.add('dragover');
@@ -225,23 +403,27 @@ const Videos = (() => {
       e.preventDefault();
       dropzone.classList.remove('dragover');
       if (e.dataTransfer.files.length > 0) {
-        uploadFile(e.dataTransfer.files[0]);
+        uploadFiles(e.dataTransfer.files);
       }
     });
 
-    document.getElementById('close-video-modal')?.addEventListener('click', closeVideoModal);
-
-    // Search filter
+    // Search
     let debounceTimer;
     searchInput?.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        loadVideos(e.target.value);
+        loadVideos(e.target.value.toLowerCase().trim());
       }, 250);
     });
 
     loadVideos();
   }
 
-  return { init, loadVideos, playVideo, deleteVideo };
+  return {
+    init,
+    loadVideos,
+    playVideo,
+    closeTheater,
+    deleteVideo
+  };
 })();
