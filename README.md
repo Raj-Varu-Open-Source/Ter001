@@ -18,15 +18,20 @@ It combines the best aspects of hierarchical notes (inspired by **Trilium**) and
   - Embedded seamlessly inside PocketHub's web dashboard so your music keeps playing continuously in the background!
   - "Open in New Tab ↗" button to jump straight to `http://<phone-ip>:8080` anytime.
 - 📝 **Quick Notes (Port 3000):** Built-in lightweight scratchpad for quick thoughts and todo lists without waiting for a full workspace.
-- 🎬 **Video Streaming & Library:**
-  - Drag-and-drop video uploads (MP4, WebM, MKV, AVI, MOV).
-  - True HTTP 206 Partial Content range requests for instant scrubbing and seeking.
-  - Client-side `<canvas>` thumbnail generation (captures video thumbnails in the browser with 0% phone CPU load and no FFmpeg).
-  - One-click download back to client or delete from phone.
-- 🎵 **Persistent Music Player:**
-  - Audio library supporting MP3, M4A, FLAC, WAV, and OGG.
-  - Sticky bottom audio bar with continuous playback, play/pause, scrub slider, volume, and next/prev track.
-  - Music keeps playing seamlessly while you write notes in Trilium or browse videos.
+- 🎬 **1:1 YouTube UI Clone (Videos Tab):**
+  - Authentic YouTube layout with rounded 16:9 cards, channel avatars, and duration badges (`.yt-duration-badge`).
+  - **YouTube Watch Theater Mode (2-Column):** Cinematic player on the left with channel avatar, title, description, and action pills; **"Up Next" sidebar queue** on the right with instant-switch playback.
+  - Category filter pills (`[ All ]`, `[ ⬆️ Upload Studio ]`) and integrated real-time video search.
+  - Dedicated **Upload Studio** with client-side `<canvas>` video frame thumbnail generation (zero phone CPU, zero FFmpeg).
+  - True HTTP 206 Partial Content range requests for instant scrubbing and zero-lag seeking.
+- 🎵 **1:1 Spotify UI Clone (Music Tab):**
+  - Authentic Spotify dark theme (`#1db954` green, `#121212` base) with sub-navigation pills (`[ 🎵 All Tracks ]`, `[ 📚 Playlists ]`, `[ ⬆️ Upload Music ]`).
+  - **Your Library Shelf & Playlists:** Create custom playlists, browse playlists in a Spotify cover grid, and add/remove tracks via modal picker.
+  - **Spotify Track Table:** Column headers `#`, `Title`, `Duration`, with active playing soundwave indicator and one-click play.
+  - **Persistent Bottom Player Bar (88px):** Album art, title, track artist, shuffle (`🔀`), repeat modes (`🔁 all`, `🔂 one`), scrub slider, and volume controls.
+  - Uninterrupted audio: Music keeps playing seamlessly across tabs (Trilium notes, videos, or dashboard).
+  - Dedicated **Local Audio Upload Studio** supporting MP3, M4A, FLAC, WAV, and OGG.
+- 💻 **Responsive on Mobile & Windows:** Flawlessly adapts between smartphones (compact single-column, hidden sidebars, touch friendly) and desktop/Windows browsers (full multi-column shelves, 2-column theater mode).
 - 💾 **Direct Android Storage & Rescan:**
   - Stores all media in your phone's shared storage (`~/storage/shared/PocketHub/`) so Android's native Gallery, VLC, and file managers can access them directly.
   - Built-in **"Rescan Library"** button indexes files placed directly on your phone via USB or downloads without battery-draining background file watchers.
@@ -110,7 +115,7 @@ On your Android phone, PocketHub stores files in:
 
 ## 🧪 Running Automated Tests
 
-To run the complete test suite (28 tests covering dual-service supervision, dynamic host resolution, database operations, notes CRUD, media streaming, range requests, and storage calculations):
+To run the complete test suite (32 tests covering dual-service supervision, dynamic host resolution, database operations, notes CRUD, media streaming, range requests, storage calculations, Spotify 1:1 UI, YouTube 1:1 UI, and playlist CRUD):
 ```bash
 node --test tests/*.test.js
 ```
