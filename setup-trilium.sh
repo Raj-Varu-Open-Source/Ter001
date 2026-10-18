@@ -52,8 +52,8 @@ apt-get install -y curl wget tar xz-utils ca-certificates libatomic1 nodejs
 mkdir -p /root/trilium-data
 
 TRILIUM_DIR="/root/trilium"
-# Only skip if Trilium is genuinely present and verified
-if [ ! -f "$TRILIUM_DIR/package.json" ] && [ ! -f "$TRILIUM_DIR/src/www" ] && [ ! -f "$TRILIUM_DIR/src/www.js" ]; then
+# Only skip if trilium.sh and src directory are genuinely present and verified
+if [ ! -f "$TRILIUM_DIR/trilium.sh" ] || [ ! -d "$TRILIUM_DIR/src" ]; then
     echo "🔍 Fetching latest Trilium server release for linux-arm64..."
     LATEST_TAG=$(curl -s https://api.github.com/repos/TriliumNext/Trilium/releases/latest | grep "tag_name" | cut -d "\"" -f 4 || echo "v0.106.0")
     if [ -z "$LATEST_TAG" ]; then LATEST_TAG="v0.106.0"; fi
@@ -72,22 +72,25 @@ if [ ! -f "$TRILIUM_DIR/package.json" ] && [ ! -f "$TRILIUM_DIR/src/www" ] && [ 
     echo "📦 Extracting Trilium package..."
     tar -xf /tmp/trilium.tar.xz -C /tmp/trilium_extracted
     
-    # Dynamically find the root containing package.json or src/www
-    FOUND_DIR=$(find /tmp/trilium_extracted -name "package.json" -exec dirname {} \; | head -n 1)
+    # Locate the folder that contains trilium.sh (the main server root)
+    FOUND_DIR=$(find /tmp/trilium_extracted -name "trilium.sh" -exec dirname {} \; | head -n 1)
     if [ -z "$FOUND_DIR" ]; then
-        FOUND_DIR=$(find /tmp/trilium_extracted -name "trilium.sh" -exec dirname {} \; | head -n 1)
+        FOUND_DIR=$(find /tmp/trilium_extracted -type d -name "*trilium*" | head -n 1)
     fi
     if [ -z "$FOUND_DIR" ]; then
         FOUND_DIR="/tmp/trilium_extracted"
     fi
     
-    echo "📂 Moving Trilium files from $FOUND_DIR to $TRILIUM_DIR..."
+    echo "📂 Installing Trilium files from $FOUND_DIR to $TRILIUM_DIR..."
     rm -rf "$TRILIUM_DIR"
     mkdir -p "$TRILIUM_DIR"
     cp -r "$FOUND_DIR"/* "$TRILIUM_DIR"/
     rm -rf /tmp/trilium_extracted /tmp/trilium.tar.xz
     chmod +x "$TRILIUM_DIR"/trilium.sh 2>/dev/null || true
-    echo "✅ Trilium extracted successfully."
+    if [ -d "$TRILIUM_DIR/node/bin" ]; then
+        chmod +x "$TRILIUM_DIR"/node/bin/* 2>/dev/null || true
+    fi
+    echo "✅ Trilium installed successfully in $TRILIUM_DIR."
 else
     echo "✅ Trilium is already installed in /root/trilium."
 fi
@@ -109,32 +112,15 @@ export TRILIUM_NETWORK_HOST=0.0.0.0
 
 cd /root/trilium
 
-# Detect entry point
-if [ -f "./src/www" ]; then
-    ENTRY="src/www"
-elif [ -f "./src/www.js" ]; then
-    ENTRY="src/www.js"
-elif [ -f "./www" ]; then
-    ENTRY="www"
-elif [ -f "./www.js" ]; then
-    ENTRY="www.js"
-else
-    ENTRY=$(find . -name "www" -o -name "www.js" | head -n 1)
-fi
-
-# Detect node binary
-if [ -x "./node/bin/node" ]; then
-    NODE_BIN="./node/bin/node"
-else
-    NODE_BIN="node"
-fi
-
-if [ -n "$ENTRY" ]; then
-    echo "[Trilium] Starting $NODE_BIN $ENTRY..."
-    exec "$NODE_BIN" "$ENTRY"
-elif [ -x "./trilium.sh" ]; then
-    echo "[Trilium] Starting via ./trilium.sh..."
+if [ -f "./trilium.sh" ]; then
+    chmod +x ./trilium.sh 2>/dev/null
     exec ./trilium.sh
+elif [ -f "./src/www" ]; then
+    if [ -x "./node/bin/node" ]; then
+        exec ./node/bin/node src/www
+    else
+        exec node src/www
+    fi
 else
     echo "❌ Error: Could not locate Trilium entry point in /root/trilium"
     ls -la /root/trilium
