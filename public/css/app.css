@@ -817,3 +817,64 @@ body {
     display: none;
   }
 }
+
+/* Trilium Viewport */
+#view-trilium {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  padding-bottom: 8px;
+}
+
+#view-trilium.active {
+  display: flex;
+}
+
+.trilium-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.trilium-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.port-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.trilium-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trilium-frame-wrapper {
+  flex: 1;
+  width: 100%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  min-height: 400px;
+}
+
+#trilium-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+

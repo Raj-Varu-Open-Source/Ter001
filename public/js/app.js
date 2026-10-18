@@ -31,9 +31,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const navButtons = document.querySelectorAll('.nav-item');
   const views = {
     notes: document.getElementById('notes-view'),
+    trilium: document.getElementById('view-trilium'),
     videos: document.getElementById('videos-view'),
     music: document.getElementById('music-view')
   };
+
+  // Trilium Dynamic Host Resolution & Frame Management
+  const triliumFrame = document.getElementById('trilium-frame');
+  const triliumNewTabLink = document.getElementById('trilium-new-tab-link');
+  const triliumReloadBtn = document.getElementById('trilium-reload-btn');
+
+  function getTriliumUrl() {
+    const host = window.location.hostname || 'localhost';
+    return `http://${host}:8080`;
+  }
+
+  function initTriliumView() {
+    const triliumUrl = getTriliumUrl();
+    if (triliumNewTabLink) {
+      triliumNewTabLink.href = triliumUrl;
+    }
+  }
+
+  function loadTriliumFrameIfNeeded() {
+    if (triliumFrame && (!triliumFrame.src || triliumFrame.src === 'about:blank' || triliumFrame.getAttribute('src') === 'about:blank')) {
+      triliumFrame.src = getTriliumUrl();
+    }
+  }
+
+  if (triliumReloadBtn && triliumFrame) {
+    triliumReloadBtn.addEventListener('click', () => {
+      triliumFrame.src = getTriliumUrl();
+    });
+  }
+
+  initTriliumView();
 
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -48,6 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (views[tab]) {
           if (tab === targetTab) {
             views[tab].classList.add('active');
+            if (tab === 'trilium') {
+              loadTriliumFrameIfNeeded();
+            }
           } else {
             views[tab].classList.remove('active');
           }

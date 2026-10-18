@@ -22,15 +22,19 @@
 
 
       <nav class="nav-menu">
-        <button class="nav-item active" data-tab="notes">
+        <button id="nav-notes" class="nav-item active" data-tab="notes">
           <span class="icon">📝</span>
-          <span>Notes</span>
+          <span>Quick Notes</span>
         </button>
-        <button class="nav-item" data-tab="videos">
+        <button id="nav-trilium" class="nav-item" data-tab="trilium">
+          <span class="icon">📚</span>
+          <span>Trilium Notes</span>
+        </button>
+        <button id="nav-videos" class="nav-item" data-tab="videos">
           <span class="icon">🎬</span>
           <span>Videos</span>
         </button>
-        <button class="nav-item" data-tab="music">
+        <button id="nav-music" class="nav-item" data-tab="music">
           <span class="icon">🎵</span>
           <span>Music</span>
         </button>
@@ -68,6 +72,27 @@
 
         <div id="notes-list" class="notes-grid">
           <!-- Populated by notes.js -->
+        </div>
+      </section>
+
+      <!-- Trilium Notes Tab -->
+      <section id="view-trilium" class="tab-view">
+        <header class="section-header trilium-header-bar">
+          <div class="header-title">
+            <div class="trilium-title-row">
+              <h1>📚 Trilium Notes</h1>
+              <span class="badge port-badge">Port 8080</span>
+            </div>
+            <p>Full hierarchical knowledge base, code notes, and drawing canvas.</p>
+          </div>
+          <div class="trilium-actions">
+            <button id="trilium-reload-btn" class="btn secondary" title="Reload Frame">🔄 Reload</button>
+            <a id="trilium-new-tab-link" href="#" target="_blank" rel="noopener noreferrer" class="btn primary">Open in New Tab ↗</a>
+          </div>
+        </header>
+
+        <div class="trilium-frame-wrapper">
+          <iframe id="trilium-frame" src="about:blank" title="Trilium Notes" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
         </div>
       </section>
 
