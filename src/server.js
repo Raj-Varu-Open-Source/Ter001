@@ -1,6 +1,6 @@
 const os = require('os');
 const { config } = require('./config');
-const { initDb } = require('./db');
+const { initDb, closeDb } = require('./db');
 const storageService = require('./services/storageService');
 const { createApp } = require('./app');
 
@@ -52,9 +52,36 @@ function startServer() {
   });
 
   // Graceful shutdown handling
+  let isShuttingDown = false;
   const shutdown = () => {
+    if (isShuttingDown) {
+      console.log('[PocketHub] Force exiting...');
+      process.exit(0);
+    }
+    isShuttingDown = true;
     console.log('\n[PocketHub] Shutting down server gracefully...');
-    server.close(() => {
+
+    // Close all connections immediately so HTTP keep-alive sockets don't hang the process (Node 18.2+)
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections();
+    } else if (typeof server.closeIdleConnections === 'function') {
+      server.closeIdleConnections();
+    }
+
+    // Safety timeout: force exit if any socket or async task hangs longer than 1s
+    const forceExitTimer = setTimeout(() => {
+      try { closeDb(); } catch (_) {}
+      process.exit(0);
+    }, 1000);
+    forceExitTimer.unref();
+
+    server.close((err) => {
+      clearTimeout(forceExitTimer);
+      try { closeDb(); } catch (_) {}
+      if (err) {
+        console.error('[PocketHub] Error closing server:', err);
+        process.exit(1);
+      }
       console.log('[PocketHub] Server closed.');
       process.exit(0);
     });
