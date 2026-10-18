@@ -107,4 +107,17 @@ test('Media Service & Range Streaming', async (t) => {
     assert.ok(typeof result.added === 'number');
     assert.ok(fs.existsSync(nonExistentDirs.videosDir));
   });
+
+  await t.test('rescanStorage indexes files in nested subdirectories', async () => {
+    const subfolder = path.join(dirs.musicDir, 'Artist', 'Album');
+    fs.mkdirSync(subfolder, { recursive: true });
+    fs.writeFileSync(path.join(subfolder, 'song.mp3'), Buffer.alloc(5000, 2));
+
+    const result = await mediaService.rescanStorage(dirs);
+    assert.ok(result.added >= 1);
+    const musicList = mediaService.listMedia({ type: 'music' });
+    const found = musicList.find(m => m.filename.includes('song.mp3'));
+    assert.ok(found, 'Should find song in nested subfolder');
+  });
 });
+

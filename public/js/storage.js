@@ -54,8 +54,10 @@ const Storage = (() => {
 
   function init() {
     rescanBtn?.addEventListener('click', triggerRescan);
+    document.getElementById('mobile-rescan-btn')?.addEventListener('click', triggerRescan);
     updateStorage();
   }
+
 
   return { init, updateStorage, triggerRescan };
 })();

@@ -245,5 +245,12 @@ const Music = (() => {
     loadTracks();
   }
 
-  return { init, loadTracks, playTrackIndex, deleteTrack };
+  function pause() {
+    if (!audioElement.paused) {
+      audioElement.pause();
+    }
+  }
+
+  return { init, loadTracks, playTrackIndex, deleteTrack, pause };
 })();
+

@@ -26,10 +26,20 @@ const MIME_MAP = {
 
 function sanitizeFilename(filename) {
   if (typeof filename !== 'string') return 'unnamed_file';
-  // Strip path traversal and directories
+  // Strip path traversal and directories, return single file basename
   const base = path.basename(filename).replace(/[\/\\]/g, '');
   const clean = base.replace(/\.{2,}/g, '_').trim();
   return clean.length > 0 ? clean : 'unnamed_file';
+}
+
+function sanitizeRelativePath(filePath) {
+  if (typeof filePath !== 'string') return 'unnamed_file';
+  const normalized = filePath.replace(/\\/g, '/');
+  const safeParts = normalized
+    .split('/')
+    .filter(part => part && part !== '.' && part !== '..')
+    .map(part => part.replace(/\.{2,}/g, '_').trim());
+  return safeParts.join('/') || 'unnamed_file';
 }
 
 function detectMediaType(filename) {
@@ -46,8 +56,8 @@ function getMimeType(filename) {
 
 function saveMediaRecord({ filename, originalName, mediaType, mimeType, fileSize, duration = 0, thumbnailPath = '' }) {
   const db = getDb();
-  const safeFilename = sanitizeFilename(filename);
-  const safeOriginal = sanitizeFilename(originalName);
+  const safeFilename = sanitizeRelativePath(filename);
+  const safeOriginal = sanitizeFilename(originalName || path.basename(filename));
 
   const result = db.run(
     `INSERT INTO media (filename, original_name, media_type, mime_type, file_size, duration, thumbnail_path, created_at)
@@ -57,6 +67,7 @@ function saveMediaRecord({ filename, originalName, mediaType, mimeType, fileSize
 
   return getMediaById(result.lastInsertRowid);
 }
+
 
 function getMediaById(id) {
   const db = getDb();
@@ -123,6 +134,25 @@ function deleteMedia(id, customDirs) {
   return result.changes > 0;
 }
 
+function findFilesRecursive(baseDir, currentRelative = '') {
+  const currentPath = path.join(baseDir, currentRelative);
+  if (!fs.existsSync(currentPath)) return [];
+
+  let results = [];
+  const entries = fs.readdirSync(currentPath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const entryRelative = currentRelative ? path.join(currentRelative, entry.name) : entry.name;
+    if (entry.isDirectory()) {
+      results = results.concat(findFilesRecursive(baseDir, entryRelative));
+    } else if (entry.isFile()) {
+      results.push(entryRelative);
+    }
+  }
+
+  return results;
+}
+
 async function rescanStorage(customDirs) {
   const dirs = customDirs || storageService.ensureDirectories();
   // Ensure directories exist
@@ -135,18 +165,18 @@ async function rescanStorage(customDirs) {
   let added = 0;
   let removed = 0;
 
-  // Scan video files
-  const videoFiles = fs.readdirSync(dirs.videosDir);
+  // Scan video files (including subdirectories)
+  const videoFiles = findFilesRecursive(dirs.videosDir);
   for (const file of videoFiles) {
     const fullPath = path.join(dirs.videosDir, file);
     try {
       const stat = fs.statSync(fullPath);
-      if (stat.isFile() && detectMediaType(file) === 'video') {
+      if (detectMediaType(file) === 'video') {
         const existing = getMediaByFilename(file);
         if (!existing) {
           saveMediaRecord({
             filename: file,
-            originalName: file,
+            originalName: path.basename(file),
             mediaType: 'video',
             mimeType: getMimeType(file),
             fileSize: stat.size
@@ -157,18 +187,18 @@ async function rescanStorage(customDirs) {
     } catch (e) { /* skip unreadable */ }
   }
 
-  // Scan music files
-  const musicFiles = fs.readdirSync(dirs.musicDir);
+  // Scan music files (including subdirectories)
+  const musicFiles = findFilesRecursive(dirs.musicDir);
   for (const file of musicFiles) {
     const fullPath = path.join(dirs.musicDir, file);
     try {
       const stat = fs.statSync(fullPath);
-      if (stat.isFile() && detectMediaType(file) === 'music') {
+      if (detectMediaType(file) === 'music') {
         const existing = getMediaByFilename(file);
         if (!existing) {
           saveMediaRecord({
             filename: file,
-            originalName: file,
+            originalName: path.basename(file),
             mediaType: 'music',
             mimeType: getMimeType(file),
             fileSize: stat.size
@@ -239,6 +269,17 @@ function streamMedia(filePath, req, res) {
     });
 
     const stream = fs.createReadStream(filePath, { start, end });
+    stream.on('error', (err) => {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      } else {
+        res.destroy();
+      }
+    });
+    res.on('close', () => {
+      stream.destroy();
+    });
     stream.pipe(res);
   } else {
     res.writeHead(200, {
@@ -247,9 +288,21 @@ function streamMedia(filePath, req, res) {
       'Accept-Ranges': 'bytes'
     });
     const stream = fs.createReadStream(filePath);
+    stream.on('error', (err) => {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      } else {
+        res.destroy();
+      }
+    });
+    res.on('close', () => {
+      stream.destroy();
+    });
     stream.pipe(res);
   }
 }
+
 
 module.exports = {
   sanitizeFilename,

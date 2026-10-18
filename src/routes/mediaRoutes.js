@@ -6,11 +6,28 @@ const mediaService = require('../services/mediaService');
 const storageService = require('../services/storageService');
 
 const router = express.Router();
-const dirs = storageService.ensureDirectories();
+
+function getDirs(req) {
+  return (req && req.app && req.app.locals && req.app.locals.dirs) || storageService.ensureDirectories();
+}
+
+function safeMoveFile(source, destination) {
+  try {
+    fs.renameSync(source, destination);
+  } catch (err) {
+    if (err.code === 'EXDEV') {
+      fs.copyFileSync(source, destination);
+      fs.unlinkSync(source);
+    } else {
+      throw err;
+    }
+  }
+}
 
 // Memory-safe upload configuration using Multer diskStorage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    const dirs = getDirs(req);
     cb(null, dirs.tempDir);
   },
   filename: (req, file, cb) => {
@@ -58,6 +75,7 @@ router.post('/upload', upload.fields([
   { name: 'thumbnail', maxCount: 1 }
 ]), async (req, res) => {
   try {
+    const dirs = getDirs(req);
     if (!req.files || !req.files.file || req.files.file.length === 0) {
       return res.status(400).json({ error: 'No media file uploaded' });
     }
@@ -75,8 +93,8 @@ router.post('/upload', upload.fields([
     const finalFilename = Date.now() + '-' + mediaService.sanitizeFilename(uploadedFile.originalname);
     const finalPath = path.join(targetDir, finalFilename);
 
-    // Move file from temp to target
-    fs.renameSync(uploadedFile.path, finalPath);
+    // Move file from temp to target with EXDEV cross-device safety
+    safeMoveFile(uploadedFile.path, finalPath);
 
     // Handle thumbnail if provided
     let thumbFilename = '';
@@ -84,7 +102,7 @@ router.post('/upload', upload.fields([
       const thumbFile = req.files.thumbnail[0];
       thumbFilename = 'thumb-' + Date.now() + '.jpg';
       const thumbFinalPath = path.join(dirs.thumbnailsDir, thumbFilename);
-      fs.renameSync(thumbFile.path, thumbFinalPath);
+      safeMoveFile(thumbFile.path, thumbFinalPath);
     }
 
     const record = mediaService.saveMediaRecord({
@@ -105,6 +123,7 @@ router.post('/upload', upload.fields([
 // GET /api/media/:id/stream - stream video or audio with range support
 router.get('/:id/stream', (req, res) => {
   try {
+    const dirs = getDirs(req);
     const id = parseInt(req.params.id, 10);
     const media = mediaService.getMediaById(id);
     if (!media) {
@@ -123,6 +142,7 @@ router.get('/:id/stream', (req, res) => {
 // GET /api/media/:id/download - direct attachment download
 router.get('/:id/download', (req, res) => {
   try {
+    const dirs = getDirs(req);
     const id = parseInt(req.params.id, 10);
     const media = mediaService.getMediaById(id);
     if (!media) {
@@ -145,15 +165,15 @@ router.get('/:id/download', (req, res) => {
 // GET /api/media/:id/thumbnail - serve thumbnail
 router.get('/:id/thumbnail', (req, res) => {
   try {
+    const dirs = getDirs(req);
     const id = parseInt(req.params.id, 10);
     const media = mediaService.getMediaById(id);
     if (!media || !media.thumbnail_path) {
       return res.status(404).json({ error: 'Thumbnail not found' });
     }
 
-    const thumbPath = path.isAbsolute(media.thumbnail_path)
-      ? media.thumbnail_path
-      : path.join(dirs.thumbnailsDir, media.thumbnail_path);
+    const cleanThumbName = mediaService.sanitizeFilename(path.basename(media.thumbnail_path));
+    const thumbPath = path.join(dirs.thumbnailsDir, cleanThumbName);
 
     if (!fs.existsSync(thumbPath)) {
       return res.status(404).json({ error: 'Thumbnail file not found' });
@@ -168,6 +188,7 @@ router.get('/:id/thumbnail', (req, res) => {
 // DELETE /api/media/:id - delete media
 router.delete('/:id', (req, res) => {
   try {
+    const dirs = getDirs(req);
     const id = parseInt(req.params.id, 10);
     const success = mediaService.deleteMedia(id, dirs);
     if (!success) {
@@ -182,6 +203,7 @@ router.delete('/:id', (req, res) => {
 // POST /api/media/rescan - trigger directory rescan
 router.post('/rescan', async (req, res) => {
   try {
+    const dirs = getDirs(req);
     const result = await mediaService.rescanStorage(dirs);
     res.json(result);
   } catch (err) {

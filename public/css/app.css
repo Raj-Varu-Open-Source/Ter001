@@ -58,6 +58,14 @@ body {
   font-size: 1.8rem;
 }
 
+.mobile-rescan {
+  display: none;
+  margin-left: auto;
+  font-size: 1.2rem;
+  padding: 6px;
+}
+
+
 .brand-info h2 {
   font-size: 1.1rem;
   font-weight: 700;

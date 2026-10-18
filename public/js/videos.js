@@ -75,6 +75,10 @@ const Videos = (() => {
     const video = videos.find(v => v.id === id);
     if (!video) return;
 
+    if (typeof Music !== 'undefined' && typeof Music.pause === 'function') {
+      Music.pause();
+    }
+
     videoModalTitle.textContent = video.original_name;
     videoPlayer.src = `/api/media/${video.id}/stream`;
     videoModal.style.display = 'flex';
@@ -139,10 +143,12 @@ const Videos = (() => {
 
       // Timeout safety: if video fails to seek within 3 seconds, continue without thumbnail
       setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
         resolve(null);
       }, 3000);
     });
   }
+
 
   async function uploadFile(file) {
     if (!file) return;

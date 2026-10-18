@@ -8,8 +8,14 @@ const systemRoutes = require('./routes/systemRoutes');
 function createApp(options = {}) {
   const app = express();
 
+  const storageService = require('./services/storageService');
+  const { config } = require('./config');
+  const targetStorageDir = options.storageDir || config.storageDir;
+  app.locals.dirs = storageService.ensureDirectories(targetStorageDir);
+
   // Middleware
   app.use(express.json());
+
   app.use(express.urlencoded({ extended: true }));
 
   // Static assets
