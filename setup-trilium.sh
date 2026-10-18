@@ -86,7 +86,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[Trilium] Starting Trilium Server on 0.0.0.0:8080..."
 echo "[Trilium] Data directory: /root/trilium-data (PRoot native ext4 storage)"
 
-exec proot-distro login debian -- env TRILIUM_DATA_DIR="/root/trilium-data" TRILIUM_NETWORK_PORT=8080 TRILIUM_NETWORK_HOST=0.0.0.0 /root/trilium/trilium.sh
+exec proot-distro login debian -- bash -c 'cd /root/trilium && chmod +x ./trilium.sh 2>/dev/null; export TRILIUM_DATA_DIR="/root/trilium-data" TRILIUM_NETWORK_PORT=8080 TRILIUM_NETWORK_HOST=0.0.0.0; if [ -x ./node/bin/node ]; then ./node/bin/node src/www; else ./trilium.sh; fi'
 EOF
 
 chmod +x "$DIR/run-trilium.sh"

@@ -62,9 +62,14 @@ trap cleanup SIGINT SIGTERM EXIT
 # 4. Check & Launch Trilium Notes Server (Port 8080)
 if [ -f "$DIR/run-trilium.sh" ]; then
     echo "📚 Starting Trilium Notes Server on port 8080..."
-    "$DIR/run-trilium.sh" > /dev/null 2>&1 &
+    "$DIR/run-trilium.sh" > "$DIR/trilium.log" 2>&1 &
     TRILIUM_PID=$!
-    echo "✅ Trilium Notes running (PID: $TRILIUM_PID)"
+    sleep 2
+    if kill -0 "$TRILIUM_PID" 2>/dev/null; then
+        echo "✅ Trilium Notes running (PID: $TRILIUM_PID)"
+    else
+        echo "⚠️  Trilium Notes did not stay running. Check log: cat trilium.log"
+    fi
 else
     echo "💡 Note: Trilium is not installed yet."
     echo "   To enable full hierarchical notes on port 8080, run: ./setup-trilium.sh"
@@ -74,7 +79,7 @@ fi
 echo "------------------------------------------------------"
 echo "🔍 Network Access Addresses (Hotspot/Wi-Fi):"
 if command -v ip >/dev/null 2>&1; then
-    ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | while read -r ip; do
+    ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | while read -r ip; do
         echo "   👉 PocketHub (Media & Quick Notes): http://$ip:3000"
         if [ -n "$TRILIUM_PID" ] && kill -0 "$TRILIUM_PID" 2>/dev/null; then
             echo "   👉 Trilium Notes (Port 8080):       http://$ip:8080"
