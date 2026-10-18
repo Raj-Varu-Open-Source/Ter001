@@ -145,66 +145,171 @@
         </div>
       </section>
 
-      <!-- Music Tab -->
-      <section id="music-view" class="tab-view">
-        <header class="section-header">
-          <div class="header-title">
-            <h1>Music & Audio</h1>
-            <p>Your local audio collection. Music keeps playing while you take notes.</p>
+      <!-- Music Tab (Spotify 1:1 Clone) -->
+      <section id="music-view" class="tab-view spotify-root">
+        <!-- Spotify Top Sub-Navigation Bar -->
+        <div class="spotify-top-nav">
+          <div class="spotify-nav-pills">
+            <button id="spotify-pill-all" class="spotify-pill active" data-subtab="all">🎵 All Tracks</button>
+            <button id="spotify-pill-playlists" class="spotify-pill" data-subtab="playlists">📚 Playlists</button>
+            <button id="spotify-pill-upload" class="spotify-pill" data-subtab="upload">⬆️ Upload Music</button>
           </div>
-        </header>
+          <div class="spotify-search-wrapper">
+            <input type="text" id="music-search" placeholder="What do you want to play?" class="spotify-search-input">
+          </div>
+        </div>
 
-        <div id="music-dropzone" class="upload-dropzone">
-          <div class="dropzone-content">
-            <span class="upload-icon">🎵</span>
-            <h3>Drop audio files here or click to upload</h3>
-            <p>MP3, M4A, FLAC, WAV, OGG supported</p>
-            <input type="file" id="music-file-input" accept="audio/*" style="display:none;">
-          </div>
-          <div id="music-upload-progress" class="upload-progress-container" style="display:none;">
-            <div class="progress-bar">
-              <div id="music-progress-fill" class="progress-fill" style="width: 0%;"></div>
+        <!-- Spotify Layout (Shelf + Content Area) -->
+        <div class="spotify-main-layout">
+          <!-- Left Shelf: Your Library -->
+          <aside id="spotify-library-shelf" class="spotify-shelf">
+            <div class="shelf-header">
+              <div class="shelf-title">
+                <span class="shelf-icon">📚</span>
+                <span>Your Library</span>
+              </div>
+              <button id="spotify-create-playlist-btn" class="icon-btn-circle" title="Create Playlist">➕</button>
             </div>
-            <span id="music-progress-text">Uploading... 0%</span>
+            <div id="spotify-playlist-list" class="shelf-playlists-container">
+              <!-- Populated dynamically -->
+            </div>
+          </aside>
+
+          <!-- Right Content Area -->
+          <div class="spotify-content-area">
+            <!-- View 1: Tracks / Playlist Detail View -->
+            <div id="spotify-tracks-subview" class="spotify-subview active">
+              <!-- Hero Banner -->
+              <div id="spotify-hero" class="spotify-hero-banner">
+                <div class="hero-cover">
+                  <span id="hero-cover-icon" class="hero-icon">🎵</span>
+                </div>
+                <div class="hero-meta">
+                  <span class="hero-type">PLAYLIST</span>
+                  <h1 id="hero-title" class="hero-title">All Audio Collection</h1>
+                  <p id="hero-subtitle" class="hero-subtitle">PocketHub Hotspot • <span id="hero-track-count">0 songs</span></p>
+                </div>
+              </div>
+
+              <!-- Action Bar -->
+              <div class="spotify-action-bar">
+                <button id="spotify-hero-play-btn" class="spotify-circle-play-btn" title="Play Collection">▶</button>
+                <div id="spotify-playlist-actions" style="display:none;">
+                  <button id="spotify-delete-playlist-btn" class="btn-text-danger" title="Delete this playlist">Delete Playlist</button>
+                </div>
+              </div>
+
+              <!-- Spotify Track Table -->
+              <div class="spotify-table-container">
+                <table id="spotify-track-table" class="spotify-table">
+                  <thead>
+                    <tr>
+                      <th class="col-num">#</th>
+                      <th class="col-title">Title</th>
+                      <th class="col-duration">⏱️</th>
+                      <th class="col-actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="music-list">
+                    <!-- Populated by music.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- View 2: Playlists Grid View -->
+            <div id="spotify-playlists-subview" class="spotify-subview" style="display:none;">
+              <div class="subview-header">
+                <h2>Your Playlists</h2>
+                <button id="spotify-new-pl-btn" class="spotify-pill-btn">+ New Playlist</button>
+              </div>
+              <div id="spotify-playlists-grid" class="spotify-grid">
+                <!-- Populated by music.js -->
+              </div>
+            </div>
+
+            <!-- View 3: Dedicated Separate Upload Music Section -->
+            <div id="music-upload-section" class="spotify-subview" style="display:none;">
+              <div class="subview-header">
+                <h2>Local Audio Upload Studio</h2>
+                <p>Add audio files to your phone's library (saved directly to shared storage)</p>
+              </div>
+              <div id="music-dropzone" class="upload-dropzone spotify-dropzone">
+                <div class="dropzone-content">
+                  <span class="upload-icon">🎵</span>
+                  <h3>Drop MP3, M4A, FLAC, WAV, OGG files here</h3>
+                  <p>Or click to browse from device</p>
+                  <input type="file" id="music-file-input" accept="audio/*" multiple style="display:none;">
+                </div>
+                <div id="music-upload-progress" class="upload-progress-container" style="display:none;">
+                  <div class="progress-bar">
+                    <div id="music-progress-fill" class="progress-fill" style="width: 0%;"></div>
+                  </div>
+                  <span id="music-progress-text">Uploading... 0%</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div class="search-bar-container">
-          <input type="text" id="music-search" placeholder="🔍 Filter audio tracks..." class="input-search">
-        </div>
-
-        <div id="music-list" class="track-list">
-          <!-- Populated by music.js -->
         </div>
       </section>
     </main>
 
-    <!-- Persistent Bottom Audio Player Bar -->
-    <div id="audio-player-bar" class="bottom-player-bar">
+    <!-- Persistent Bottom Audio Player Bar (Spotify 1:1) -->
+    <div id="audio-player-bar" class="bottom-player-bar spotify-player-bar">
+      <!-- Left: Track Info -->
       <div class="player-track-info">
-        <div class="track-art">🎵</div>
+        <div id="player-art" class="track-art spotify-art">🎵</div>
         <div class="track-meta">
           <div id="player-title" class="track-title">No track playing</div>
-          <div id="player-artist" class="track-artist">Select a song from Music</div>
+          <div id="player-artist" class="track-artist">Select a track from Spotify</div>
         </div>
       </div>
 
+      <!-- Center: Controls & Scrubber -->
       <div class="player-controls-center">
         <div class="playback-buttons">
-          <button id="player-prev-btn" class="icon-btn" title="Previous">⏮</button>
-          <button id="player-play-btn" class="play-btn" title="Play/Pause">▶</button>
-          <button id="player-next-btn" class="icon-btn" title="Next">⏭</button>
+          <button id="player-shuffle-btn" class="icon-control-btn" title="Shuffle">🔀</button>
+          <button id="player-prev-btn" class="icon-control-btn" title="Previous">⏮</button>
+          <button id="player-play-btn" class="play-btn-circle" title="Play/Pause">▶</button>
+          <button id="player-next-btn" class="icon-control-btn" title="Next">⏭</button>
+          <button id="player-repeat-btn" class="icon-control-btn" title="Repeat">🔁</button>
         </div>
         <div class="scrub-container">
           <span id="player-current-time" class="time-label">0:00</span>
-          <input type="range" id="player-scrub" class="scrub-slider" min="0" max="100" value="0">
+          <input type="range" id="player-scrub" class="scrub-slider spotify-slider" min="0" max="100" value="0">
           <span id="player-total-time" class="time-label">0:00</span>
         </div>
       </div>
 
+      <!-- Right: Volume -->
       <div class="player-volume-control">
-        <span class="volume-icon">🔊</span>
-        <input type="range" id="player-volume" class="volume-slider" min="0" max="1" step="0.05" value="0.9">
+        <button id="player-mute-btn" class="icon-btn-plain" title="Mute/Unmute">🔊</button>
+        <input type="range" id="player-volume" class="volume-slider spotify-slider" min="0" max="1" step="0.05" value="0.9">
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Playlist Modal -->
+  <div id="modal-create-playlist" class="modal-overlay" style="display:none;">
+    <div class="modal-card spotify-modal">
+      <h3>Create New Playlist</h3>
+      <input type="text" id="new-playlist-name-input" placeholder="My Awesome Playlist" class="spotify-input">
+      <div class="modal-actions">
+        <button id="btn-cancel-playlist" class="btn secondary">Cancel</button>
+        <button id="btn-confirm-playlist" class="btn primary spotify-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add to Playlist Picker Modal -->
+  <div id="modal-add-to-playlist" class="modal-overlay" style="display:none;">
+    <div class="modal-card spotify-modal">
+      <h3>Add to Playlist</h3>
+      <div id="add-to-playlist-options" class="playlist-picker-list">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="modal-actions">
+        <button id="btn-close-add-playlist" class="btn secondary">Close</button>
       </div>
     </div>
   </div>
