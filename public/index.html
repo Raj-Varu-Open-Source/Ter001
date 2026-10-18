@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PocketHub - Personal Media & Notes</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📱</text></svg>">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-icon">📱</span>
+        <div class="brand-info">
+          <h2>PocketHub</h2>
+          <span class="badge online">Hotspot Server</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="notes">
+          <span class="icon">📝</span>
+          <span>Notes</span>
+        </button>
+        <button class="nav-item" data-tab="videos">
+          <span class="icon">🎬</span>
+          <span>Videos</span>
+        </button>
+        <button class="nav-item" data-tab="music">
+          <span class="icon">🎵</span>
+          <span>Music</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="storage-widget">
+          <div class="storage-header">
+            <span>💾 Phone Storage</span>
+            <button id="rescan-btn" title="Rescan files on disk" class="icon-btn">🔄</button>
+          </div>
+          <div class="progress-bar">
+            <div id="storage-bar" class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <div id="storage-text" class="storage-text">Loading storage...</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Notes Tab -->
+      <section id="notes-view" class="tab-view active">
+        <header class="section-header">
+          <div class="header-title">
+            <h1>Notes & Knowledge</h1>
+            <p>Capture thoughts, lists, and study notes directly on your phone.</p>
+          </div>
+          <button id="new-note-btn" class="btn primary">+ New Note</button>
+        </header>
+
+        <div class="search-bar-container">
+          <input type="text" id="notes-search" placeholder="🔍 Search notes by title or content..." class="input-search">
+        </div>
+
+        <div id="notes-list" class="notes-grid">
+          <!-- Populated by notes.js -->
+        </div>
+      </section>
+
+      <!-- Videos Tab -->
+      <section id="videos-view" class="tab-view">
+        <header class="section-header">
+          <div class="header-title">
+            <h1>Video Library</h1>
+            <p>Stream uploaded videos with full scrubbing and playback controls.</p>
+          </div>
+        </header>
+
+        <div id="video-dropzone" class="upload-dropzone">
+          <div class="dropzone-content">
+            <span class="upload-icon">🎬</span>
+            <h3>Drop video files here or click to upload</h3>
+            <p>MP4, WebM, MKV, AVI, MOV supported (streamed directly with range requests)</p>
+            <input type="file" id="video-file-input" accept="video/*" style="display:none;">
+          </div>
+          <div id="video-upload-progress" class="upload-progress-container" style="display:none;">
+            <div class="progress-bar">
+              <div id="video-progress-fill" class="progress-fill" style="width: 0%;"></div>
+            </div>
+            <span id="video-progress-text">Uploading... 0%</span>
+          </div>
+        </div>
+
+        <div class="search-bar-container">
+          <input type="text" id="videos-search" placeholder="🔍 Filter videos..." class="input-search">
+        </div>
+
+        <div id="videos-list" class="media-grid">
+          <!-- Populated by videos.js -->
+        </div>
+      </section>
+
+      <!-- Music Tab -->
+      <section id="music-view" class="tab-view">
+        <header class="section-header">
+          <div class="header-title">
+            <h1>Music & Audio</h1>
+            <p>Your local audio collection. Music keeps playing while you take notes.</p>
+          </div>
+        </header>
+
+        <div id="music-dropzone" class="upload-dropzone">
+          <div class="dropzone-content">
+            <span class="upload-icon">🎵</span>
+            <h3>Drop audio files here or click to upload</h3>
+            <p>MP3, M4A, FLAC, WAV, OGG supported</p>
+            <input type="file" id="music-file-input" accept="audio/*" style="display:none;">
+          </div>
+          <div id="music-upload-progress" class="upload-progress-container" style="display:none;">
+            <div class="progress-bar">
+              <div id="music-progress-fill" class="progress-fill" style="width: 0%;"></div>
+            </div>
+            <span id="music-progress-text">Uploading... 0%</span>
+          </div>
+        </div>
+
+        <div class="search-bar-container">
+          <input type="text" id="music-search" placeholder="🔍 Filter audio tracks..." class="input-search">
+        </div>
+
+        <div id="music-list" class="track-list">
+          <!-- Populated by music.js -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Persistent Bottom Audio Player Bar -->
+    <div id="audio-player-bar" class="bottom-player-bar">
+      <div class="player-track-info">
+        <div class="track-art">🎵</div>
+        <div class="track-meta">
+          <div id="player-title" class="track-title">No track playing</div>
+          <div id="player-artist" class="track-artist">Select a song from Music</div>
+        </div>
+      </div>
+
+      <div class="player-controls-center">
+        <div class="playback-buttons">
+          <button id="player-prev-btn" class="icon-btn" title="Previous">⏮</button>
+          <button id="player-play-btn" class="play-btn" title="Play/Pause">▶</button>
+          <button id="player-next-btn" class="icon-btn" title="Next">⏭</button>
+        </div>
+        <div class="scrub-container">
+          <span id="player-current-time" class="time-label">0:00</span>
+          <input type="range" id="player-scrub" class="scrub-slider" min="0" max="100" value="0">
+          <span id="player-total-time" class="time-label">0:00</span>
+        </div>
+      </div>
+
+      <div class="player-volume-control">
+        <span class="volume-icon">🔊</span>
+        <input type="range" id="player-volume" class="volume-slider" min="0" max="1" step="0.05" value="0.9">
+      </div>
+    </div>
+  </div>
+
+  <!-- Note Editor Modal -->
+  <div id="note-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <input type="text" id="note-title-input" placeholder="Note Title..." class="input-title">
+        <button id="close-note-modal" class="close-btn">&times;</button>
+      </div>
+
+      <div class="editor-toolbar">
+        <button type="button" class="tool-btn" data-action="bold"><b>B</b></button>
+        <button type="button" class="tool-btn" data-action="italic"><i>I</i></button>
+        <button type="button" class="tool-btn" data-action="h1">H1</button>
+        <button type="button" class="tool-btn" data-action="h2">H2</button>
+        <button type="button" class="tool-btn" data-action="bullet">• List</button>
+        <button type="button" class="tool-btn" data-action="checklist">☑ Checklist</button>
+      </div>
+
+      <div class="modal-body">
+        <textarea id="note-content-input" placeholder="Write your notes here (supports Markdown formatting)..." class="editor-textarea"></textarea>
+        <input type="text" id="note-tags-input" placeholder="Tags (comma separated, e.g. study, project)" class="input-tags">
+      </div>
+
+      <div class="modal-footer">
+        <button id="delete-note-btn" class="btn danger" style="display:none;">Delete</button>
+        <div style="flex:1;"></div>
+        <button id="cancel-note-btn" class="btn secondary">Cancel</button>
+        <button id="save-note-btn" class="btn primary">Save Note</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Player Modal -->
+  <div id="video-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card video-modal-card">
+      <div class="modal-header">
+        <h3 id="video-modal-title">Watching Video</h3>
+        <button id="close-video-modal" class="close-btn">&times;</button>
+      </div>
+      <div class="video-container">
+        <video id="main-video-player" controls preload="metadata" playsinline></video>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Client-side canvas for zero-dependency video frame thumbnails -->
+  <canvas id="thumbnail-canvas" style="display:none;"></canvas>
+
+  <!-- Scripts -->
+  <script src="/js/notes.js"></script>
+  <script src="/js/videos.js"></script>
+  <script src="/js/music.js"></script>
+  <script src="/js/storage.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

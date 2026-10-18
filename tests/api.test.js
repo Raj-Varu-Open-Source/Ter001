@@ -59,4 +59,26 @@ test('API Integration Tests', async (t) => {
     const list = await res.json();
     assert.ok(Array.isArray(list));
   });
+
+  await t.test('Frontend static assets are served correctly', async () => {
+    // Test index.html
+    const indexRes = await fetch(`http://127.0.0.1:${port}/`);
+    assert.equal(indexRes.status, 200);
+    const html = await indexRes.text();
+    assert.ok(html.includes('PocketHub'));
+    assert.ok(html.includes('notes-view'));
+
+    // Test CSS
+    const cssRes = await fetch(`http://127.0.0.1:${port}/css/app.css`);
+    assert.equal(cssRes.status, 200);
+    const css = await cssRes.text();
+    assert.ok(css.includes('--primary'));
+
+    // Test JS
+    const jsRes = await fetch(`http://127.0.0.1:${port}/js/app.js`);
+    assert.equal(jsRes.status, 200);
+    const js = await jsRes.text();
+    assert.ok(js.includes('DOMContentLoaded'));
+  });
 });
+
