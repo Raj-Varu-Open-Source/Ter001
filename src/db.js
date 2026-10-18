@@ -101,6 +101,25 @@ function initDb(dbFilePath = config.dbPath) {
     CREATE INDEX IF NOT EXISTS idx_notes_title ON notes(title);
     CREATE INDEX IF NOT EXISTS idx_notes_updated_at ON notes(updated_at);
     CREATE INDEX IF NOT EXISTS idx_media_type ON media(media_type);
+
+    CREATE TABLE IF NOT EXISTS playlists (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS playlist_tracks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      playlist_id INTEGER NOT NULL,
+      media_id INTEGER NOT NULL,
+      position INTEGER DEFAULT 0,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+      FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE,
+      UNIQUE(playlist_id, media_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist ON playlist_tracks(playlist_id);
   `);
 
   return currentDb;

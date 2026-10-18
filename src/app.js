@@ -4,6 +4,7 @@ const fs = require('fs');
 const notesRoutes = require('./routes/notesRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
 const systemRoutes = require('./routes/systemRoutes');
+const playlistRoutes = require('./routes/playlistRoutes');
 
 function createApp(options = {}) {
   const app = express();
@@ -28,6 +29,7 @@ function createApp(options = {}) {
   app.use('/api/notes', notesRoutes);
   app.use('/api/media', mediaRoutes);
   app.use('/api/system', systemRoutes);
+  app.use('/api/playlists', playlistRoutes);
 
   // Health check
   app.get('/api/health', (req, res) => {
